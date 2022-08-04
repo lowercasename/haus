@@ -256,7 +256,6 @@ const FoodPlanTable = () => {
         // to fill out the week
         const fullWeek = [...Array(7)].map((a, i) => {
           const ISODateValue = ISODate(addDays(weekStart, i));
-          console.log(ISODateValue);
           if (!data.some(({ date }) => date === ISODateValue)) {
             return {
               date: ISODateValue,
