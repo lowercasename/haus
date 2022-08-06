@@ -9,40 +9,44 @@ import Checkbox from "@mui/material/Checkbox";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import DeleteIcon from "@mui/icons-material/DeleteOutlineOutlined";
-import PersonIcon from "@mui/icons-material/Person";
+import FaceIcon from "@mui/icons-material/Face";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Chip from "@mui/material/Chip";
 
 import axios from "axios";
 import { ButtonBase } from "@mui/material";
-const apiUrl = "http://localhost:8088/api/v1/";
 
-const ISODate = (date) => {
+const ISODate = (date = new Date()) => {
   const offset = date.getTimezoneOffset();
   return new Date(date.getTime() - offset * 60 * 1000)
     .toISOString()
     .split("T")[0];
 };
 
-const PersonMenu = () => {
+const PersonMenu = ({ item, users, handleUpdatePerson, isChecked }) => {
+  const [selectedUser, setSelectedUser] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+
+  useEffect(() => {
+    if (item.person) {
+      setSelectedUser(users.find(({ id }) => id === item.person));
+    }
+  }, [item, users]);
+
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
   const handleClose = () => {
     setAnchorEl(null);
   };
-  const handleSelect = (e) => {
-    console.log(e.target.textContent);
-    const person = e.target.textContent;
-    if (!person || person === "None") {
-    }
+  const handleSelect = (userId) => {
+    handleUpdatePerson(item, userId);
     handleClose();
+    setSelectedUser(users.find(({ id }) => id === userId));
   };
   return (
     <div>
@@ -56,9 +60,13 @@ const PersonMenu = () => {
         onClick={handleClick}
       >
         <Chip
-          label="Chip Filled"
-          icon={<PersonIcon />}
+          label={
+            selectedUser ? selectedUser.given_name ?? selectedUser.name : "None"
+          }
+          icon={<FaceIcon />}
           sx={{ cursor: "pointer" }}
+          size="small"
+          color={selectedUser && !isChecked(item) ? "primary" : "default"}
         />
       </ButtonBase>
       <Menu
@@ -69,27 +77,46 @@ const PersonMenu = () => {
           "aria-labelledby": "basic-button",
         }}
       >
-        <MenuItem onClick={handleSelect}>None</MenuItem>
-        <MenuItem onClick={handleSelect}>Raphael</MenuItem>
-        <MenuItem onClick={handleSelect}>Harriet</MenuItem>
+        <MenuItem onClick={() => handleSelect(false)}>None</MenuItem>
+        {users.map((user) => (
+          <MenuItem onClick={() => handleSelect(user.id)} key={user.id}>
+            {user.given_name ?? user.name}
+          </MenuItem>
+        ))}
       </Menu>
     </div>
   );
 };
 
-export default function TodoList({ title, date, type }) {
+export default function TodoList({ title, date, type, users }) {
   const [checked, setChecked] = useState([]);
   const [items, setItems] = useState([]);
   const [inputValue, setInputValue] = useState("");
+
+  const isChecked = (item) => checked.indexOf(item.id) !== -1;
+
+  useEffect(() => {
+    axios
+      .get(process.env.REACT_APP_API_URI + "task", {
+        params: { date: date ? ISODate(date) : ISODate(), type },
+      })
+      .then(({ data }) => {
+        setItems(data);
+        setChecked(
+          data.reduce((acc, o) => (o.done ? [...acc, o.id] : acc), [])
+        );
+      });
+  }, [date, type]);
 
   const handleToggle = (item) => () => {
     const currentIndex = checked.indexOf(item.id);
     const newChecked = [...checked];
 
-    console.log(item);
-
     axios
-      .put(apiUrl + type, { id: item.id, done: currentIndex === -1 })
+      .put(process.env.REACT_APP_API_URI + "task", {
+        id: item.id,
+        done: currentIndex === -1,
+      })
       .then(({ data }) => {
         if (data.message) {
           console.log(data);
@@ -106,26 +133,24 @@ export default function TodoList({ title, date, type }) {
       .catch((error) => console.log(error.response));
   };
 
-  const isChecked = (item) => checked.indexOf(item.id) !== -1;
-
-  useEffect(() => {
+  const handleUpdatePerson = (item, userId) => {
     axios
-      .get(apiUrl + type, { params: { date: ISODate(date) } })
-      .then(({ data }) => {
-        setItems(data);
-        setChecked(
-          data.reduce((acc, o) => (o.done ? [...acc, o.id] : acc), [])
-        );
-      });
-  }, [date]);
+      .put(process.env.REACT_APP_API_URI + "task", {
+        id: item.id,
+        person: userId,
+      })
+      .then((response) => console.log(response.data))
+      .catch((error) => console.log(error.response));
+  };
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
       axios
-        .post(apiUrl + type, {
+        .post(process.env.REACT_APP_API_URI + "task", {
           content: inputValue,
           done: false,
-          date: ISODate(date),
+          date: date ? ISODate(date) : ISODate(),
+          type,
         })
         .then(({ data }) => {
           if (data.message) {
@@ -142,7 +167,9 @@ export default function TodoList({ title, date, type }) {
 
   const handleDelete = (item) => {
     axios
-      .delete(apiUrl + type, { params: { id: item.id } })
+      .delete(process.env.REACT_APP_API_URI + "task", {
+        params: { id: item.id },
+      })
       .then(({ data }) => {
         if (data.message) {
           setItems(items.filter((o) => o.id !== item.id));
@@ -173,7 +200,14 @@ export default function TodoList({ title, date, type }) {
               key={item.id}
               secondaryAction={
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <PersonMenu />
+                  {users?.length && (
+                    <PersonMenu
+                      item={item}
+                      users={users}
+                      handleUpdatePerson={handleUpdatePerson}
+                      isChecked={isChecked}
+                    />
+                  )}
                   <IconButton
                     edge="end"
                     aria-label="delete item"

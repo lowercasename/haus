@@ -21,8 +21,6 @@ import AddCircleIcon from "@mui/icons-material/AddCircle";
 
 import RecipeCard from "./RecipeCard";
 
-const apiUrl = "http://localhost:8088/api/v1/";
-
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
 
@@ -37,7 +35,7 @@ function TabPanel(props) {
     >
       {value === index && (
         <Box sx={{ p: 3 }}>
-          <Typography>{children}</Typography>
+          <div>{children}</div>
         </Box>
       )}
     </div>
@@ -101,7 +99,7 @@ const RecipeList = ({
 
       <Grid container spacing={2} sx={{ mb: 4 }}>
         {recipes.map((recipe) => (
-          <Grid item xs={12} md={6} lg={3} sx={{ display: "flex" }}>
+          <Grid item xs={12} md={6} lg={3} sx={{ display: "flex" }} key={recipe.id}>
             <RecipeCard recipe={recipe} />
           </Grid>
         ))}
@@ -144,14 +142,16 @@ export default function Recipes() {
   const [newCategoryName, setNewCategoryName] = useState("");
 
   useEffect(() => {
-    axios.get(apiUrl + "recipe").then(({ data }) => {
+    axios.get(process.env.REACT_APP_API_URI + "recipe").then(({ data }) => {
       console.log(data);
       setRecipes(data);
     });
-    axios.get(apiUrl + "recipe-category").then(({ data }) => {
-      console.log(data);
-      setCategories(data);
-    });
+    axios
+      .get(process.env.REACT_APP_API_URI + "recipe-category")
+      .then(({ data }) => {
+        console.log(data);
+        setCategories(data);
+      });
   }, []);
 
   const handleChange = (event, newValue) => {
@@ -160,7 +160,9 @@ export default function Recipes() {
 
   const handleAddCategory = () => {
     axios
-      .post(apiUrl + "recipe-category", { name: newCategoryName.trim() })
+      .post(process.env.REACT_APP_API_URI + "recipe-category", {
+        name: newCategoryName.trim(),
+      })
       .then(({ data }) => {
         setCategories([
           ...categories,
@@ -172,7 +174,9 @@ export default function Recipes() {
 
   const handleDeleteCategory = (category) => {
     axios
-      .delete(apiUrl + "recipe-category", { params: { id: category.id } })
+      .delete(process.env.REACT_APP_API_URI + "recipe-category", {
+        params: { id: category.id },
+      })
       .then(({ data }) => {
         console.log(data);
         setCategories(categories.filter((o) => o.id !== category.id));
@@ -181,7 +185,10 @@ export default function Recipes() {
 
   const handleAddRecipe = async (url, category) => {
     return await axios
-      .post(apiUrl + "recipe", { url, category: category.id })
+      .post(process.env.REACT_APP_API_URI + "recipe", {
+        url,
+        category: category.id,
+      })
       .then(({ data }) => {
         console.log("Recipe added");
         console.log(data);
@@ -205,16 +212,16 @@ export default function Recipes() {
           sx={{ borderRight: 1, borderColor: "divider" }}
         >
           {categories.map((category) => (
-            <Tab label={category.name} />
+            <Tab label={category.name} key={category.id} />
           ))}
           <Tab icon={<AddCircleIcon />} iconPosition={"start"} label="New" />
         </Tabs>
       </Box>
       {categories.map((category, index) => (
-        <TabPanel value={value} index={index}>
+        <TabPanel value={value} index={index} key={category.id}>
           <RecipeList
             category={category}
-            recipes={recipes.filter((o) => o.category_id === category.id)}
+            recipes={recipes.filter((o) => o.RecipeCategoryId === category.id)}
             handleDeleteCategory={handleDeleteCategory}
             handleAddRecipe={handleAddRecipe}
           />

@@ -1,21 +1,10 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Link,
-  useLocation,
-} from "react-router-dom";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import remarkBreaks from "remark-breaks";
+import { Routes, Route, Link } from "react-router-dom";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
-import Stack from "@mui/material/Stack";
 import CssBaseline from "@mui/material/CssBaseline";
-import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import List from "@mui/material/List";
@@ -31,9 +20,8 @@ import RestaurantIcon from "@mui/icons-material/RestaurantRounded";
 import HomeIcon from "@mui/icons-material/HomeRounded";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import EditIcon from "@mui/icons-material/EditRounded";
-import DoneIcon from "@mui/icons-material/DoneRounded";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import AccountBoxIcon from "@mui/icons-material/AccountBox";
 
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -43,27 +31,22 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 
-import TextField from "@mui/material/TextField";
-
-import Snackbar from "@mui/material/Snackbar";
-import MuiAlert from "@mui/material/Alert";
-
 import Button from "@mui/material/Button";
 
 import Grid from "@mui/material/Grid";
 
-import { grey, pink, purple, deepPurple, indigo } from "@mui/material/colors";
+import { grey, pink, purple, indigo } from "@mui/material/colors";
 
-import TodoList from "./List";
+import TaskList from "./List";
 import Recipes from "./Recipes";
 import Tasks from "./Tasks";
-import { Auth0Provider, useAuth0 } from "@auth0/auth0-react";
-
-const Alert = React.forwardRef(function Alert(props, ref) {
-  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
-});
-
-const apiUrl = "http://localhost:8088/api/v1/";
+import Profile from "./Profile";
+import { Auth0Provider } from "@auth0/auth0-react";
+import ProtectedRoute from "./ProtectedRoute";
+import EditableCell from "./components/EditableCell";
+import EditableMarkdownField from "./components/EditableMarkdownField";
+import AuthenticationButton from "./components/AuthenticationButton";
+import { Divider } from "@mui/material";
 
 const formatDate = (date) =>
   new Date(date).toLocaleString("en-GB", {
@@ -84,179 +67,36 @@ const addDays = (date, days) => {
   return new Date(dateClone.setDate(dateClone.getDate() + days));
 };
 
-const getMonday = (date) => {
-  const day = date.getDay() || 7; // Get current day number, converting Sun. to 7
-  if (day !== 1)
-    // Only manipulate the date if it isn't Mon.
-    date.setHours(-24 * (day - 1));
-  return date;
-};
-
-const EditableCell = ({ content, handleUpdate }) => {
-  const [editing, setEditing] = useState(false);
-  const [editValue, setEditValue] = useState(content || "");
-  const [error, setError] = useState(false);
-
-  const handleChange = (e) => {
-    setEditValue(e.currentTarget.value);
-  };
-  const handleChildUpdate = async (e) => {
-    const haveUpdated = await handleUpdate(e);
-    if (haveUpdated) {
-      setEditing(false);
-    } else {
-      setError("There has been an error saving your changes.");
-    }
-  };
-
-  const handleCloseSnackbar = (event, reason) => {
-    if (reason === "clickaway") {
-      return;
-    }
-
-    setError(false);
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleChildUpdate(e);
-    }
-  };
-
-  return (
-    <>
-      <TableCell onClick={() => editing === false && setEditing(true)}>
-        {editing ? (
-          <TextField
-            autoFocus={true}
-            label="Type here"
-            multiline
-            maxRows={4}
-            value={editValue}
-            onChange={handleChange}
-            onBlur={handleChildUpdate}
-            onKeyPress={handleKeyPress}
-            sx={{ width: "100%" }}
-          />
-        ) : (
-          content
-        )}
-      </TableCell>
-      <Snackbar
-        open={!!error}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity="error"
-          sx={{ width: "100%" }}
-        >
-          {error}
-        </Alert>
-      </Snackbar>
-    </>
-  );
-};
-
-const EditableMarkdownField = ({ content, handleUpdate }) => {
-  const [editing, setEditing] = useState(false);
-  const [editValue, setEditValue] = useState(content || "");
-  const [error, setError] = useState(false);
-
-  const handleChange = (e) => {
-    setEditValue(e.currentTarget.value);
-  };
-  const handleChildUpdate = async (e) => {
-    const haveUpdated = await handleUpdate(editValue);
-    if (haveUpdated) {
-      setEditing(false);
-    } else {
-      setError("There has been an error saving your changes.");
-    }
-  };
-
-  const handleCloseSnackbar = (event, reason) => {
-    if (reason === "clickaway") {
-      return;
-    }
-    setError(false);
-  };
-
-  const handleToggleEdit = (e) => {
-    if (editing) {
-      setEditing(false);
-      handleChildUpdate(e);
-    } else {
-      setEditValue(content);
-      setEditing(true);
-    }
-  };
-
-  return (
-    <>
-      <Stack
-        direction="row"
-        spacing={2}
-        justifyContent="space-between"
-        sx={{ mb: 2 }}
-      >
-        <Typography variant="h6" component="div">
-          Notes
-        </Typography>
-        <IconButton
-          color="primary"
-          aria-label="edit"
-          onClick={handleToggleEdit}
-        >
-          {editing ? <DoneIcon /> : <EditIcon />}
-        </IconButton>
-      </Stack>
-      {editing ? (
-        <TextField
-          autoFocus={true}
-          label="Add notes"
-          multiline
-          value={editValue}
-          onChange={handleChange}
-          sx={{ width: "100%" }}
-        />
-      ) : (
-        <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
-          {content}
-        </ReactMarkdown>
-      )}
-      <Snackbar
-        open={!!error}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity="error"
-          sx={{ width: "100%" }}
-        >
-          {error}
-        </Alert>
-      </Snackbar>
-    </>
-  );
+const getSunday = (date = new Date()) => {
+  const previousSunday = new Date();
+  previousSunday.setDate(date.getDate() - date.getDay());
+  return previousSunday;
 };
 
 const FoodPlanTable = () => {
-  const [weekStart, setWeekStart] = useState(getMonday(new Date()));
+  const [weekStart, setWeekStart] = useState(getSunday());
   const [data, setData] = useState([]);
   const [notes, setNotes] = useState("");
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    axios.get(process.env.REACT_APP_API_URI + "user").then(({ data }) => {
+      setUsers(data);
+    });
+  }, []);
 
   useEffect(() => {
     axios
-      .get(apiUrl + "week", { params: { date: ISODate(weekStart) } })
+      .get(process.env.REACT_APP_API_URI + "food-plan", {
+        params: { date: ISODate(weekStart) },
+      })
       .then(({ data }) => {
         // API only sends those days that have data attached to them, so we need
         // to fill out the week
+        console.log(data);
         const fullWeek = [...Array(7)].map((a, i) => {
           const ISODateValue = ISODate(addDays(weekStart, i));
-          if (!data.some(({ date }) => date === ISODateValue)) {
+          if (!data.some(({ date }) => date?.split("T")[0] === ISODateValue)) {
             return {
               date: ISODateValue,
               breakfast: null,
@@ -264,7 +104,9 @@ const FoodPlanTable = () => {
               dinner: null,
             };
           } else {
-            return data.find(({ date }) => date === ISODateValue);
+            return data.find(
+              ({ date }) => date?.split("T")[0] === ISODateValue
+            );
           }
         });
         setData(fullWeek);
@@ -273,15 +115,20 @@ const FoodPlanTable = () => {
 
   useEffect(() => {
     axios
-      .get(apiUrl + "notes", { params: { date: ISODate(weekStart) } })
+      .get(process.env.REACT_APP_API_URI + "note", {
+        params: { date: ISODate(weekStart) },
+      })
       .then(({ data }) => setNotes(data ? data.content : ""));
   }, [weekStart]);
 
   const handleUpdate = async (e, rowData, key) => {
-    const newValue = e.currentTarget.value.trim();
+    const newValue = e.target.value.trim();
     if (newValue === rowData[key]) return true;
     return await axios
-      .post(apiUrl + "day", { date: rowData.date, [key]: newValue })
+      .post(process.env.REACT_APP_API_URI + "food-plan", {
+        date: rowData.date,
+        [key]: newValue,
+      })
       .then((response) => {
         if (response.data.message) {
           const newData = data.map((o) =>
@@ -298,7 +145,10 @@ const FoodPlanTable = () => {
   const handleNotesUpdate = async (newValue) => {
     if (newValue === notes) return true;
     return await axios
-      .post(apiUrl + "notes", { date: ISODate(weekStart), content: newValue })
+      .post(process.env.REACT_APP_API_URI + "note", {
+        date: ISODate(weekStart),
+        content: newValue,
+      })
       .then((response) => {
         if (response.data.message) {
           setNotes(newValue);
@@ -316,16 +166,6 @@ const FoodPlanTable = () => {
     console.log(newWeekStart);
     setWeekStart(newWeekStart);
   };
-
-  // const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  //   '&:nth-of-type(odd)': {
-  //     backgroundColor: theme.palette.action.hover,
-  //   },
-  //   // hide last border
-  //   '&:last-child td, &:last-child th': {
-  //     border: 0,
-  //   },
-  // }));
 
   return (
     <>
@@ -407,10 +247,15 @@ const FoodPlanTable = () => {
           </Paper>
         </Grid>
         <Grid item xs={12} md={6}>
-          <TodoList type="todo" title="To Do List" date={weekStart} />
+          <TaskList
+            type="food-task"
+            title="To Do List"
+            date={weekStart}
+            users={users}
+          />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TodoList type="shopping" title="Shopping List" date={weekStart} />
+          <TaskList type="shopping" title="Shopping List" date={weekStart} />
         </Grid>
       </Grid>
     </>
@@ -455,25 +300,13 @@ export default function App(props) {
           </ListItemIcon>
           <ListItemText primary={"Tasks"} />
         </ListItemButton>
-        {/* {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => ( */}
-        {/*   <ListItem button key={text}> */}
-        {/*     <ListItemIcon> */}
-        {/*       {index % 2 === 0 ? <InboxIcon /> : <MailIcon />} */}
-        {/*     </ListItemIcon> */}
-        {/*     <ListItemText primary={text} /> */}
-        {/*   </ListItem> */}
-        {/* ))} */}
-        {/* </List> */}
-        {/* <Divider /> */}
-        {/* <List> */}
-        {/* {['All mail', 'Trash', 'Spam'].map((text, index) => ( */}
-        {/*   <ListItem button key={text}> */}
-        {/*     <ListItemIcon> */}
-        {/*       {index % 2 === 0 ? <InboxIcon /> : <MailIcon />} */}
-        {/*     </ListItemIcon> */}
-        {/*     <ListItemText primary={text} /> */}
-        {/*   </ListItem> */}
-        {/* ))} */}
+        <Divider />
+        <ListItemButton to="/profile" component={Link}>
+          <ListItemIcon>
+            <AccountBoxIcon />
+          </ListItemIcon>
+          <ListItemText primary={"Profile"} />
+        </ListItemButton>
       </List>
     </div>
   );
@@ -481,51 +314,12 @@ export default function App(props) {
   const container =
     window !== undefined ? () => window().document.body : undefined;
 
-  const LoginButton = () => {
-    const { loginWithRedirect, isAuthenticated } = useAuth0();
-
-    return (
-      isAuthenticated === false && (
-        <button onClick={() => loginWithRedirect()}>Log In</button>
-      )
-    );
-  };
-
-  const LogoutButton = () => {
-    const { logout, isAuthenticated } = useAuth0();
-
-    return (
-      isAuthenticated && (
-        <button onClick={() => logout({ returnTo: window.location.origin })}>
-          Log Out
-        </button>
-      )
-    );
-  };
-
-  const Profile = () => {
-    const { user, isAuthenticated, isLoading } = useAuth0();
-
-    if (isLoading) {
-      return <div>Loading ...</div>;
-    }
-
-    return (
-      isAuthenticated && (
-        <div>
-          <img src={user.picture} alt={user.name} />
-          <h2>{user.name}</h2>
-          <p>{user.email}</p>
-        </div>
-      )
-    );
-  };
-
   return (
     <Auth0Provider
       domain="dev-7udhnrqd.us.auth0.com"
       clientId="eAdu2nUzmlaZ5lAXcWjVp5ztDzQEK8KZ"
-      redirectUri={"http://localhost:3000"}
+      redirectUri={process.env.REACT_APP_AUTH0_REDIRECT_URI}
+      cacheLocation="localstorage"
     >
       <ThemeProvider theme={theme}>
         <Box sx={{ display: "flex" }}>
@@ -545,11 +339,15 @@ export default function App(props) {
                 <MenuIcon />
               </IconButton>
               <HomeIcon sx={{ mr: 1 }} />
-              <Typography variant="h6" noWrap component="div">
+              <Typography
+                variant="h6"
+                noWrap
+                component="div"
+                sx={{ flexGrow: 1 }}
+              >
                 Haus
               </Typography>
-              <LoginButton />
-              <LogoutButton />
+              <AuthenticationButton />
             </Toolbar>
           </AppBar>
           <Box
@@ -602,10 +400,26 @@ export default function App(props) {
           >
             <Toolbar />
             <Routes>
-              <Route path="/" element={<Profile />} />
-              <Route path="/food-plan" element={<FoodPlanTable />} />
-              <Route path="/recipes" element={<Recipes />} />
-              <Route path="/tasks" element={<Tasks />} />
+              <Route
+                path="/"
+                element={
+                  <>
+                    <h1>Welcome to Haus!</h1>
+                  </>
+                }
+              />
+              <Route path="/food-plan" element={<ProtectedRoute />}>
+                <Route path="/food-plan" element={<FoodPlanTable />} />
+              </Route>
+              <Route path="/recipes" element={<ProtectedRoute />}>
+                <Route path="/recipes" element={<Recipes />} />
+              </Route>
+              <Route path="/tasks" element={<ProtectedRoute />}>
+                <Route path="/tasks" element={<Tasks />} />
+              </Route>
+              <Route path="/profile" element={<ProtectedRoute />}>
+                <Route path="/profile" element={<Profile />} />
+              </Route>
             </Routes>
           </Box>
         </Box>
