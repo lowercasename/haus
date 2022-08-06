@@ -17,7 +17,6 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 
 import RestaurantIcon from "@mui/icons-material/RestaurantRounded";
-import HomeIcon from "@mui/icons-material/HomeRounded";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
@@ -326,7 +325,10 @@ export default function App(props) {
           <CssBaseline />
           <AppBar
             position="fixed"
-            sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+            sx={{
+              zIndex: (theme) => theme.zIndex.drawer + 1,
+              backgroundColor: "#9f3c1e",
+            }}
           >
             <Toolbar>
               <IconButton
@@ -338,7 +340,11 @@ export default function App(props) {
               >
                 <MenuIcon />
               </IconButton>
-              <HomeIcon sx={{ mr: 1 }} />
+              <img
+                alt="Icon of a cottage"
+                src="/house.png"
+                style={{ width: 40, marginRight: "1rem" }}
+              />
               <Typography
                 variant="h6"
                 noWrap
@@ -392,7 +398,6 @@ export default function App(props) {
             sx={{
               flexGrow: 1,
               p: 3,
-              width: { sm: `calc(100% - ${drawerWidth}px)` },
               minHeight: "100vh",
               backgroundColor: grey[100],
               width: "100%",
