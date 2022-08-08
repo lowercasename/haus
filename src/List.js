@@ -98,7 +98,7 @@ export default function TodoList({ title, date, type, users }) {
   useEffect(() => {
     axios
       .get(process.env.REACT_APP_API_URI + "task", {
-        params: { date: date ? ISODate(date) : ISODate(), type },
+        params: { date: date ? ISODate(date) : undefined, type },
       })
       .then(({ data }) => {
         setItems(data);
