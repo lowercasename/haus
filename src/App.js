@@ -40,7 +40,7 @@ import TaskList from "./List";
 import Recipes from "./Recipes";
 import Tasks from "./Tasks";
 import Profile from "./Profile";
-import { Auth0Provider } from "@auth0/auth0-react";
+import { Auth0Provider, useAuth0 } from "@auth0/auth0-react";
 import ProtectedRoute from "./ProtectedRoute";
 import EditableCell from "./components/EditableCell";
 import EditableMarkdownField from "./components/EditableMarkdownField";
@@ -261,6 +261,46 @@ const FoodPlanTable = () => {
   );
 };
 
+const DrawerContents = () => {
+  const { isAuthenticated, isLoading } = useAuth0();
+  if (isAuthenticated && !isLoading) {
+    return (
+      <div>
+        <Toolbar />
+        <List>
+          <ListItemButton to="/food-plan" component={Link}>
+            <ListItemIcon>
+              <RestaurantIcon />
+            </ListItemIcon>
+            <ListItemText primary={"Food Plan"} />
+          </ListItemButton>
+          <ListItemButton to="/recipes" component={Link}>
+            <ListItemIcon>
+              <MenuBookIcon />
+            </ListItemIcon>
+            <ListItemText primary={"Recipes"} />
+          </ListItemButton>
+          <ListItemButton to="/tasks" component={Link}>
+            <ListItemIcon>
+              <TaskAltIcon />
+            </ListItemIcon>
+            <ListItemText primary={"Tasks"} />
+          </ListItemButton>
+          <Divider />
+          <ListItemButton to="/profile" component={Link}>
+            <ListItemIcon>
+              <AccountBoxIcon />
+            </ListItemIcon>
+            <ListItemText primary={"Profile"} />
+          </ListItemButton>
+        </List>
+      </div>
+    );
+  } else {
+    return <></>;
+  }
+};
+
 const drawerWidth = 240;
 
 const theme = createTheme({
@@ -272,43 +312,17 @@ const theme = createTheme({
 export default function App(props) {
   const { window } = props;
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const { loginWithRedirect, isAuthenticated, isLoading } = useAuth0();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  const drawer = (
-    <div>
-      <Toolbar />
-      <List>
-        <ListItemButton to="/food-plan" component={Link}>
-          <ListItemIcon>
-            <RestaurantIcon />
-          </ListItemIcon>
-          <ListItemText primary={"Food Plan"} />
-        </ListItemButton>
-        <ListItemButton to="/recipes" component={Link}>
-          <ListItemIcon>
-            <MenuBookIcon />
-          </ListItemIcon>
-          <ListItemText primary={"Recipes"} />
-        </ListItemButton>
-        <ListItemButton to="/tasks" component={Link}>
-          <ListItemIcon>
-            <TaskAltIcon />
-          </ListItemIcon>
-          <ListItemText primary={"Tasks"} />
-        </ListItemButton>
-        <Divider />
-        <ListItemButton to="/profile" component={Link}>
-          <ListItemIcon>
-            <AccountBoxIcon />
-          </ListItemIcon>
-          <ListItemText primary={"Profile"} />
-        </ListItemButton>
-      </List>
-    </div>
-  );
+  useEffect(() => {
+    if (!isAuthenticated && !isLoading) {
+      loginWithRedirect();
+    }
+  }, [isAuthenticated, isLoading, loginWithRedirect]);
 
   const container =
     window !== undefined ? () => window().document.body : undefined;
@@ -377,7 +391,7 @@ export default function App(props) {
                 },
               }}
             >
-              {drawer}
+              <DrawerContents />
             </Drawer>
             <Drawer
               variant="permanent"
@@ -390,7 +404,7 @@ export default function App(props) {
               }}
               open
             >
-              {drawer}
+              <DrawerContents />
             </Drawer>
           </Box>
           <Box
