@@ -10,7 +10,7 @@ import {
 import axios from "axios";
 
 const ReminderList = () => {
-  const [items, setItems] = useState([]);
+  const [_, setItems] = useState([]);
   useEffect(() => {
     axios.get(process.env.REACT_APP_API_URI + "reminder").then(({ data }) => {
       setItems(data);
