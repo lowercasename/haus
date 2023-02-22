@@ -45,7 +45,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import EditableCell from "./components/EditableCell";
 import EditableMarkdownField from "./components/EditableMarkdownField";
 import AuthenticationButton from "./components/AuthenticationButton";
-import { Divider } from "@mui/material";
+import { Divider, Skeleton } from "@mui/material";
 
 const formatDate = (date) =>
   new Date(date).toLocaleString("en-GB", {
@@ -66,14 +66,15 @@ const addDays = (date, days) => {
   return new Date(dateClone.setDate(dateClone.getDate() + days));
 };
 
-const getSunday = (date = new Date()) => {
-  const previousSunday = new Date();
-  previousSunday.setDate(date.getDate() - date.getDay());
-  return previousSunday;
+const getMonday = (date = new Date()) => {
+  const previousMonday = new Date();
+  previousMonday.setDate(date.getDate() - date.getDay() + 1);
+  return previousMonday;
 };
 
 const FoodPlanTable = () => {
-  const [weekStart, setWeekStart] = useState(getSunday());
+  const [loading, setLoading] = useState(true);
+  const [weekStart, setWeekStart] = useState(getMonday());
   const [data, setData] = useState([]);
   const [notes, setNotes] = useState("");
   const [users, setUsers] = useState([]);
@@ -93,7 +94,7 @@ const FoodPlanTable = () => {
         // API only sends those days that have data attached to them, so we need
         // to fill out the week
         console.log(data);
-        const fullWeek = [...Array(7)].map((a, i) => {
+        const fullWeek = [...Array(7)].map((_, i) => {
           const ISODateValue = ISODate(addDays(weekStart, i));
           if (!data.some(({ date }) => date?.split("T")[0] === ISODateValue)) {
             return {
@@ -109,6 +110,7 @@ const FoodPlanTable = () => {
           }
         });
         setData(fullWeek);
+        setLoading(false);
       });
   }, [weekStart]);
 
@@ -138,7 +140,7 @@ const FoodPlanTable = () => {
         }
         return false;
       })
-      .catch((error) => false);
+      .catch(() => false);
   };
 
   const handleNotesUpdate = async (newValue) => {
@@ -155,7 +157,7 @@ const FoodPlanTable = () => {
         }
         return false;
       })
-      .catch((error) => false);
+      .catch(() => false);
   };
 
   const navigateWeek = (offset) => {
@@ -195,28 +197,48 @@ const FoodPlanTable = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {data.map((row) => (
-              <TableRow
-                key={row.date}
-                sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-              >
-                <TableCell component="th" scope="row" sx={{ fontWeight: 700 }}>
-                  {formatDate(row.date)}
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={4}>
+                  {Array.from(new Array(7)).map(() => (
+                    <Skeleton
+                      variant="rectangular"
+                      width="100%"
+                      height={40}
+                      sx={{ marginBottom: 1 }}
+                      animation="wave"
+                    />
+                  ))}
                 </TableCell>
-                <EditableCell
-                  handleUpdate={(e) => handleUpdate(e, row, "breakfast")}
-                  content={row.breakfast}
-                />
-                <EditableCell
-                  handleUpdate={(e) => handleUpdate(e, row, "lunch")}
-                  content={row.lunch}
-                />
-                <EditableCell
-                  handleUpdate={(e) => handleUpdate(e, row, "dinner")}
-                  content={row.dinner}
-                />
               </TableRow>
-            ))}
+            ) : (
+              data.map((row) => (
+                <TableRow
+                  key={row.date}
+                  sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                >
+                  <TableCell
+                    component="th"
+                    scope="row"
+                    sx={{ fontWeight: 700 }}
+                  >
+                    {formatDate(row.date)}
+                  </TableCell>
+                  <EditableCell
+                    handleUpdate={(e) => handleUpdate(e, row, "breakfast")}
+                    content={row.breakfast}
+                  />
+                  <EditableCell
+                    handleUpdate={(e) => handleUpdate(e, row, "lunch")}
+                    content={row.lunch}
+                  />
+                  <EditableCell
+                    handleUpdate={(e) => handleUpdate(e, row, "dinner")}
+                    content={row.dinner}
+                  />
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>
