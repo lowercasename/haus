@@ -170,6 +170,22 @@ const FoodPlanTable = () => {
 
   return (
     <>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+        <Button
+          variant="contained"
+          startIcon={<ChevronLeftIcon />}
+          onClick={() => navigateWeek(-1)}
+        >
+          Previous week
+        </Button>
+        <Button
+          variant="contained"
+          endIcon={<ChevronRightIcon />}
+          onClick={() => navigateWeek(1)}
+        >
+          Next week
+        </Button>
+      </Box>
       <TableContainer component={Paper} sx={{ overflowY: "auto" }}>
         <Table
           sx={{ minWidth: 800, tableLayout: "fixed" }}
@@ -242,22 +258,6 @@ const FoodPlanTable = () => {
           </TableBody>
         </Table>
       </TableContainer>
-      <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
-        <Button
-          variant="contained"
-          startIcon={<ChevronLeftIcon />}
-          onClick={() => navigateWeek(-1)}
-        >
-          Previous week
-        </Button>
-        <Button
-          variant="contained"
-          endIcon={<ChevronRightIcon />}
-          onClick={() => navigateWeek(1)}
-        >
-          Next week
-        </Button>
-      </Box>
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Paper sx={{ mt: 2, p: 2 }}>
