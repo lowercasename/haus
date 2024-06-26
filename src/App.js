@@ -40,12 +40,14 @@ import TaskList from "./List";
 import Recipes from "./Recipes";
 import Tasks from "./Tasks";
 import Profile from "./Profile";
+import RecipeIdeas from "./RecipeIdeas";
 import { Auth0Provider, useAuth0 } from "@auth0/auth0-react";
 import ProtectedRoute from "./ProtectedRoute";
 import EditableCell from "./components/EditableCell";
 import EditableMarkdownField from "./components/EditableMarkdownField";
 import AuthenticationButton from "./components/AuthenticationButton";
 import { Divider, Skeleton } from "@mui/material";
+import TipsAndUpdatesIcon from '@mui/icons-material/TipsAndUpdates';
 
 const formatDate = (date) =>
   new Date(date).toLocaleString("en-GB", {
@@ -302,6 +304,12 @@ const DrawerContents = () => {
             </ListItemIcon>
             <ListItemText primary={"Recipes"} />
           </ListItemButton>
+          <ListItemButton to="/recipe-ideas" component={Link}>
+            <ListItemIcon>
+              <TipsAndUpdatesIcon />
+            </ListItemIcon>
+            <ListItemText primary={"Recipe Ideas"} />
+          </ListItemButton>
           <ListItemButton to="/tasks" component={Link}>
             <ListItemIcon>
               <TaskAltIcon />
@@ -454,6 +462,9 @@ export default function App(props) {
               </Route>
               <Route path="/recipes" element={<ProtectedRoute />}>
                 <Route path="/recipes" element={<Recipes />} />
+              </Route>
+              <Route path="/recipe-ideas" element={<ProtectedRoute />}>
+                <Route path="/recipe-ideas" element={<RecipeIdeas />} />
               </Route>
               <Route path="/tasks" element={<ProtectedRoute />}>
                 <Route path="/tasks" element={<Tasks />} />

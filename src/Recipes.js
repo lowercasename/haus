@@ -47,6 +47,7 @@ const RecipeList = ({
   recipes,
   handleDeleteCategory,
   handleAddRecipe,
+  handleDeleteRecipe,
 }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [recipeUrl, setRecipeUrl] = useState("");
@@ -100,7 +101,7 @@ const RecipeList = ({
       <Grid container spacing={2} sx={{ mb: 4 }}>
         {recipes.map((recipe) => (
           <Grid item xs={12} md={6} lg={3} sx={{ display: "flex" }} key={recipe.id}>
-            <RecipeCard recipe={recipe} />
+            <RecipeCard recipe={recipe} handleDelete={handleDeleteRecipe} />
           </Grid>
         ))}
       </Grid>
@@ -201,6 +202,23 @@ export default function Recipes() {
       .catch((error) => false);
   };
 
+  const handleDeleteRecipe = async (id) => {
+    return await axios
+      .delete(process.env.REACT_APP_API_URI + "recipe", {
+        params: { id },
+      })
+      .then(({ data }) => {
+        console.log("Recipe deleted");
+        console.log(data);
+        if (data.message) {
+          setRecipes(recipes.filter((o) => o.id !== id));
+          return true;
+        }
+        return false;
+      })
+      .catch((error) => false);
+  }
+
   return (
     <Box component={Paper}>
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -224,6 +242,7 @@ export default function Recipes() {
             recipes={recipes.filter((o) => o.RecipeCategoryId === category.id)}
             handleDeleteCategory={handleDeleteCategory}
             handleAddRecipe={handleAddRecipe}
+            handleDeleteRecipe={handleDeleteRecipe}
           />
         </TabPanel>
       ))}

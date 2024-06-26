@@ -3,12 +3,14 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import CardActionArea from "@mui/material/CardActionArea";
+import CardActions from "@mui/material/CardActions";
 import Typography from "@mui/material/Typography";
+import Button from '@mui/material/Button';
 
-export default function RecipeCard({ recipe }) {
+export default function RecipeCard({ recipe, handleDelete }) {
   return (
-    <Card>
-      <CardActionArea sx={{ height: "100%" }} href={recipe.url} target="_blank">
+    <Card sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <CardActionArea href={recipe.url} target="_blank">
         <CardMedia component="img" height="140" image={recipe.image} />
         <CardContent>
           <Typography
@@ -34,6 +36,11 @@ export default function RecipeCard({ recipe }) {
           </Typography>
         </CardContent>
       </CardActionArea>
+      <CardActions sx={{ marginTop: "auto" }}>
+        <Button aria-label="delete" size="small" onClick={() => handleDelete(recipe.id)} >
+          Delete
+        </Button>
+      </CardActions>
     </Card>
   );
 }
