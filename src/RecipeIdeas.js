@@ -141,6 +141,8 @@ const RecipeIdeas = () => {
 
     const handleDeleteIdea = async () => {
         try {
+            const confirmDelete = window.confirm('Are you sure you want to delete this recipe idea?');
+            if (!confirmDelete) return;
             await axios.delete(`${process.env.REACT_APP_API_URI}recipe-ideas/${selectedIdea.id}`);
             fetchRecipeIdeas();
             fetchTags();
@@ -347,7 +349,7 @@ const RecipeIdeas = () => {
                                             ))
                                         }
                                         renderInput={(params) => (
-                                            <TextField {...params} label="Tags" placeholder="Tags" margin="normal" />
+                                            <TextField {...params} label="Tags" placeholder="Tags (press Enter to add)" margin="normal" />
                                         )}
                                         value={selectedIdea.RecipeTags?.map(t => t.name)}
                                         onChange={(event, newValue) => {
@@ -364,7 +366,7 @@ const RecipeIdeas = () => {
                                             ))
                                         }
                                         renderInput={(params) => (
-                                            <TextField {...params} label="Main Ingredients" placeholder="Ingredients" margin="normal" />
+                                            <TextField {...params} label="Main Ingredients" placeholder="Ingredients (press Enter to add)" margin="normal" />
                                         )}
                                         value={selectedIdea.MainIngredients?.map(i => i.name)}
                                         onChange={(event, newValue) => {
