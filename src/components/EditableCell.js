@@ -28,8 +28,8 @@ const EditableCell = ({ content, handleUpdate }) => {
   };
 
   const handleKeyPress = (e) => {
-    console.log(e);
     if (e.key === "Enter") {
+      e.preventDefault();
       handleChildUpdate(e);
     }
   };

@@ -15,12 +15,13 @@ import MenuIcon from "@mui/icons-material/Menu";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
+import { useDebounce } from "@uidotdev/usehooks";
 
 import RestaurantIcon from "@mui/icons-material/RestaurantRounded";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
-import AccountBoxIcon from "@mui/icons-material/AccountBox";
+import Chip from "@mui/material/Chip";
 
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -39,15 +40,11 @@ import { grey, pink, purple, indigo } from "@mui/material/colors";
 import TaskList from "./List";
 import Recipes from "./Recipes";
 import Tasks from "./Tasks";
-import Profile from "./Profile";
 import RecipeIdeas from "./RecipeIdeas";
-import { Auth0Provider, useAuth0 } from "@auth0/auth0-react";
-import ProtectedRoute from "./ProtectedRoute";
 import EditableCell from "./components/EditableCell";
-import EditableMarkdownField from "./components/EditableMarkdownField";
-import AuthenticationButton from "./components/AuthenticationButton";
-import { Divider, Skeleton } from "@mui/material";
-import TipsAndUpdatesIcon from '@mui/icons-material/TipsAndUpdates';
+import { Skeleton, TextField } from "@mui/material";
+import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
+import { CheckCircle, Sync } from "@mui/icons-material";
 
 const formatDate = (date) =>
   new Date(date).toLocaleString("en-GB", {
@@ -79,6 +76,8 @@ const FoodPlanTable = () => {
   const [weekStart, setWeekStart] = useState(getMonday());
   const [data, setData] = useState([]);
   const [notes, setNotes] = useState("");
+  const debouncedNotes = useDebounce(notes, 1000);
+  const [notesSaved, setNotesSaved] = useState(true);
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
@@ -145,21 +144,25 @@ const FoodPlanTable = () => {
       .catch(() => false);
   };
 
-  const handleNotesUpdate = async (newValue) => {
-    if (newValue === notes) return true;
-    return await axios
-      .post(process.env.REACT_APP_API_URI + "note", {
-        date: ISODate(weekStart),
-        content: newValue,
-      })
-      .then((response) => {
-        if (response.data.message) {
-          setNotes(newValue);
-          return true;
-        }
-        return false;
-      })
-      .catch(() => false);
+  useEffect(() => {
+    const handleNotesUpdate = async () => {
+      setNotesSaved(false);
+      if (debouncedNotes) {
+        await axios
+          .post(process.env.REACT_APP_API_URI + "note", {
+            date: ISODate(weekStart),
+            content: debouncedNotes,
+          })
+          .then(() => setNotesSaved(true));
+      }
+    };
+
+    handleNotesUpdate();
+  }, [debouncedNotes, weekStart]);
+
+  const handleNotesChange = (e) => {
+    setNotesSaved(false);
+    setNotes(e.target.value);
   };
 
   const navigateWeek = (offset) => {
@@ -263,9 +266,20 @@ const FoodPlanTable = () => {
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Paper sx={{ mt: 2, p: 2 }}>
-            <EditableMarkdownField
-              content={notes}
-              handleUpdate={handleNotesUpdate}
+            <TextField
+              label="Weekly notes"
+              value={notes}
+              onChange={handleNotesChange}
+              multiline
+              rows={4}
+              sx={{ width: "100%" }}
+            />
+            <Chip
+              label={notesSaved ? "Saved" : "Not saved"}
+              icon={notesSaved ? <CheckCircle /> : <Sync />}
+              color={notesSaved ? "success" : "warning"}
+              size="small"
+              sx={{ mt: 1 }}
             />
           </Paper>
         </Grid>
@@ -286,49 +300,37 @@ const FoodPlanTable = () => {
 };
 
 const DrawerContents = () => {
-  const { isAuthenticated, isLoading } = useAuth0();
-  if (isAuthenticated && !isLoading) {
-    return (
-      <div>
-        <Toolbar />
-        <List>
-          <ListItemButton to="/food-plan" component={Link}>
-            <ListItemIcon>
-              <RestaurantIcon />
-            </ListItemIcon>
-            <ListItemText primary={"Food Plan"} />
-          </ListItemButton>
-          <ListItemButton to="/recipes" component={Link}>
-            <ListItemIcon>
-              <MenuBookIcon />
-            </ListItemIcon>
-            <ListItemText primary={"Recipes"} />
-          </ListItemButton>
-          <ListItemButton to="/recipe-ideas" component={Link}>
-            <ListItemIcon>
-              <TipsAndUpdatesIcon />
-            </ListItemIcon>
-            <ListItemText primary={"Recipe Ideas"} />
-          </ListItemButton>
-          <ListItemButton to="/tasks" component={Link}>
-            <ListItemIcon>
-              <TaskAltIcon />
-            </ListItemIcon>
-            <ListItemText primary={"Tasks"} />
-          </ListItemButton>
-          <Divider />
-          <ListItemButton to="/profile" component={Link}>
-            <ListItemIcon>
-              <AccountBoxIcon />
-            </ListItemIcon>
-            <ListItemText primary={"Profile"} />
-          </ListItemButton>
-        </List>
-      </div>
-    );
-  } else {
-    return <></>;
-  }
+  return (
+    <div>
+      <Toolbar />
+      <List>
+        <ListItemButton to="/food-plan" component={Link}>
+          <ListItemIcon>
+            <RestaurantIcon />
+          </ListItemIcon>
+          <ListItemText primary={"Food Plan"} />
+        </ListItemButton>
+        <ListItemButton to="/recipes" component={Link}>
+          <ListItemIcon>
+            <MenuBookIcon />
+          </ListItemIcon>
+          <ListItemText primary={"Recipes"} />
+        </ListItemButton>
+        <ListItemButton to="/recipe-ideas" component={Link}>
+          <ListItemIcon>
+            <TipsAndUpdatesIcon />
+          </ListItemIcon>
+          <ListItemText primary={"Recipe Ideas"} />
+        </ListItemButton>
+        <ListItemButton to="/tasks" component={Link}>
+          <ListItemIcon>
+            <TaskAltIcon />
+          </ListItemIcon>
+          <ListItemText primary={"Tasks"} />
+        </ListItemButton>
+      </List>
+    </div>
+  );
 };
 
 const drawerWidth = 240;
@@ -342,140 +344,114 @@ const theme = createTheme({
 export default function App(props) {
   const { window } = props;
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const { loginWithRedirect, isAuthenticated, isLoading } = useAuth0();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  useEffect(() => {
-    if (!isAuthenticated && !isLoading) {
-      loginWithRedirect();
-    }
-  }, [isAuthenticated, isLoading, loginWithRedirect]);
-
   const container =
     window !== undefined ? () => window().document.body : undefined;
 
   return (
-    <Auth0Provider
-      domain="dev-7udhnrqd.us.auth0.com"
-      clientId="eAdu2nUzmlaZ5lAXcWjVp5ztDzQEK8KZ"
-      redirectUri={process.env.REACT_APP_AUTH0_REDIRECT_URI}
-      cacheLocation="localstorage"
-    >
-      <ThemeProvider theme={theme}>
-        <Box sx={{ display: "flex" }}>
-          <CssBaseline />
-          <AppBar
-            position="fixed"
+    <ThemeProvider theme={theme}>
+      <Box sx={{ display: "flex" }}>
+        <CssBaseline />
+        <AppBar
+          position="fixed"
+          sx={{
+            zIndex: (theme) => theme.zIndex.drawer + 1,
+            backgroundColor: "#9f3c1e",
+          }}
+        >
+          <Toolbar>
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, display: { sm: "none" } }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <img
+              alt="Icon of a cottage"
+              src="/house.png"
+              style={{ width: 40, marginRight: "1rem" }}
+            />
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={{ flexGrow: 1 }}
+            >
+              Haus
+            </Typography>
+          </Toolbar>
+        </AppBar>
+        <Box
+          component="nav"
+          sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+        >
+          {/* The implementation can be swapped with js to avoid SEO duplication of links. */}
+          <Drawer
+            container={container}
+            variant="temporary"
+            open={mobileOpen}
+            onClose={handleDrawerToggle}
+            ModalProps={{
+              keepMounted: true, // Better open performance on mobile.
+            }}
             sx={{
-              zIndex: (theme) => theme.zIndex.drawer + 1,
-              backgroundColor: "#9f3c1e",
+              display: { xs: "block", sm: "none" },
+              "& .MuiDrawer-paper": {
+                boxSizing: "border-box",
+                width: drawerWidth,
+              },
             }}
           >
-            <Toolbar>
-              <IconButton
-                color="inherit"
-                aria-label="open drawer"
-                edge="start"
-                onClick={handleDrawerToggle}
-                sx={{ mr: 2, display: { sm: "none" } }}
-              >
-                <MenuIcon />
-              </IconButton>
-              <img
-                alt="Icon of a cottage"
-                src="/house.png"
-                style={{ width: 40, marginRight: "1rem" }}
-              />
-              <Typography
-                variant="h6"
-                noWrap
-                component="div"
-                sx={{ flexGrow: 1 }}
-              >
-                Haus
-              </Typography>
-              <AuthenticationButton />
-            </Toolbar>
-          </AppBar>
-          <Box
-            component="nav"
-            sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-          >
-            {/* The implementation can be swapped with js to avoid SEO duplication of links. */}
-            <Drawer
-              container={container}
-              variant="temporary"
-              open={mobileOpen}
-              onClose={handleDrawerToggle}
-              ModalProps={{
-                keepMounted: true, // Better open performance on mobile.
-              }}
-              sx={{
-                display: { xs: "block", sm: "none" },
-                "& .MuiDrawer-paper": {
-                  boxSizing: "border-box",
-                  width: drawerWidth,
-                },
-              }}
-            >
-              <DrawerContents />
-            </Drawer>
-            <Drawer
-              variant="permanent"
-              sx={{
-                display: { xs: "none", sm: "block" },
-                "& .MuiDrawer-paper": {
-                  boxSizing: "border-box",
-                  width: drawerWidth,
-                },
-              }}
-              open
-            >
-              <DrawerContents />
-            </Drawer>
-          </Box>
-          <Box
-            component="main"
+            <DrawerContents />
+          </Drawer>
+          <Drawer
+            variant="permanent"
             sx={{
-              flexGrow: 1,
-              p: 3,
-              minHeight: "100vh",
-              backgroundColor: grey[100],
-              width: "100%",
+              display: { xs: "none", sm: "block" },
+              "& .MuiDrawer-paper": {
+                boxSizing: "border-box",
+                width: drawerWidth,
+              },
             }}
+            open
           >
-            <Toolbar />
-            <Routes>
-              <Route
-                path="/"
-                element={
-                  <>
-                    <h1>Welcome to Haus!</h1>
-                  </>
-                }
-              />
-              <Route path="/food-plan" element={<ProtectedRoute />}>
-                <Route path="/food-plan" element={<FoodPlanTable />} />
-              </Route>
-              <Route path="/recipes" element={<ProtectedRoute />}>
-                <Route path="/recipes" element={<Recipes />} />
-              </Route>
-              <Route path="/recipe-ideas" element={<ProtectedRoute />}>
-                <Route path="/recipe-ideas" element={<RecipeIdeas />} />
-              </Route>
-              <Route path="/tasks" element={<ProtectedRoute />}>
-                <Route path="/tasks" element={<Tasks />} />
-              </Route>
-              <Route path="/profile" element={<ProtectedRoute />}>
-                <Route path="/profile" element={<Profile />} />
-              </Route>
-            </Routes>
-          </Box>
+            <DrawerContents />
+          </Drawer>
         </Box>
-      </ThemeProvider>
-    </Auth0Provider>
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            minHeight: "100vh",
+            backgroundColor: grey[100],
+            width: "100%",
+          }}
+        >
+          <Toolbar />
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <>
+                  <h1>Welcome to Haus!</h1>
+                </>
+              }
+            />
+            <Route path="/food-plan" element={<FoodPlanTable />} />
+            <Route path="/recipes" element={<Recipes />} />
+            <Route path="/recipe-ideas" element={<RecipeIdeas />} />
+            <Route path="/tasks" element={<Tasks />} />
+          </Routes>
+        </Box>
+      </Box>
+    </ThemeProvider>
   );
 }
