@@ -437,14 +437,7 @@ export default function App(props) {
         >
           <Toolbar />
           <Routes>
-            <Route
-              path="/"
-              element={
-                <>
-                  <h1>Welcome to Haus!</h1>
-                </>
-              }
-            />
+            <Route path="/" element={<FoodPlanTable />} />
             <Route path="/food-plan" element={<FoodPlanTable />} />
             <Route path="/recipes" element={<Recipes />} />
             <Route path="/recipe-ideas" element={<RecipeIdeas />} />
