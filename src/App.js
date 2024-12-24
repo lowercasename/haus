@@ -15,7 +15,6 @@ import MenuIcon from "@mui/icons-material/Menu";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import { useDebounce } from "@uidotdev/usehooks";
 
 import RestaurantIcon from "@mui/icons-material/RestaurantRounded";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
@@ -76,7 +75,6 @@ const FoodPlanTable = () => {
   const [weekStart, setWeekStart] = useState(getMonday());
   const [data, setData] = useState([]);
   const [notes, setNotes] = useState("");
-  const debouncedNotes = useDebounce(notes, 1000);
   const [notesSaved, setNotesSaved] = useState(true);
   const [users, setUsers] = useState([]);
 
@@ -115,12 +113,15 @@ const FoodPlanTable = () => {
       });
   }, [weekStart]);
 
+  // Update notes when week changes
   useEffect(() => {
     axios
       .get(process.env.REACT_APP_API_URI + "note", {
         params: { date: ISODate(weekStart) },
       })
-      .then(({ data }) => setNotes(data ? data.content : ""));
+      .then(({ data }) => {
+        setNotes(data ? data.content : "");
+      });
   }, [weekStart]);
 
   const handleUpdate = async (e, rowData, key) => {
@@ -144,32 +145,26 @@ const FoodPlanTable = () => {
       .catch(() => false);
   };
 
-  useEffect(() => {
-    const handleNotesUpdate = async () => {
-      setNotesSaved(false);
-      if (debouncedNotes) {
-        await axios
-          .post(process.env.REACT_APP_API_URI + "note", {
-            date: ISODate(weekStart),
-            content: debouncedNotes,
-          })
-          .then(() => setNotesSaved(true));
-      }
-    };
-
-    handleNotesUpdate();
-  }, [debouncedNotes, weekStart]);
-
-  const handleNotesChange = (e) => {
+  const handleNotesChange = async (e) => {
     setNotesSaved(false);
     setNotes(e.target.value);
+    await axios
+      .post(process.env.REACT_APP_API_URI + "note", {
+        date: ISODate(weekStart),
+        content: e.target.value,
+      })
+      .then(() => {
+        setNotesSaved(true);
+      })
+      .catch(() => {
+        setNotesSaved(false);
+      });
   };
 
   const navigateWeek = (offset) => {
     const newWeekStart = new Date(
       weekStart.setDate(weekStart.getDate() + offset * 7)
     );
-    console.log(newWeekStart);
     setWeekStart(newWeekStart);
   };
 
@@ -269,7 +264,11 @@ const FoodPlanTable = () => {
             <TextField
               label="Weekly notes"
               value={notes}
-              onChange={handleNotesChange}
+              onChange={(e) => {
+                setNotes(e.target.value);
+                setNotesSaved(false);
+              }}
+              onBlur={handleNotesChange}
               multiline
               rows={4}
               sx={{ width: "100%" }}
